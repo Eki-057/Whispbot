@@ -32,10 +32,12 @@ namespace Whispbot.Commands
 
         public void HandleMessage(Client client, Message message)
         {
-            string prefix = Config.isDev ? ";" : "!";
+            string prefix = Config.isDev ? "b;" : "b!";
             string mention = $"<@{client.readyData?.user.id}>";
 
             if (message.content.StartsWith(mention)) prefix = mention;
+
+            if (!message.content.StartsWith(prefix)) return;
 
             List<string> args = [.. message.content[prefix.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries)];
             string commandName = args[0].ToLowerInvariant(); args.RemoveAt(0);
