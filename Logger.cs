@@ -14,11 +14,6 @@ namespace Whispbot
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-                .WriteTo.File(Config.isDev ? "logs/whispbot-.log" : "/app/logs/whispbot-.log",
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileTimeLimit: TimeSpan.FromDays(7),
-                    fileSizeLimitBytes: 10_485_760,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
             Log.Information("Logger initialized");

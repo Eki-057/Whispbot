@@ -13,10 +13,10 @@ using Serilog;
 
 Logger.Initialize();
 
-bool dev = Config.isDev;
+bool dev = Config.IsDev;
 if (dev) Log.Information("Running in development mode.");
 
-string? token = Environment.GetEnvironmentVariable("CLIENT_TOKEN");
+string? token = dev ? Environment.GetEnvironmentVariable("DEV_TOKEN") : Environment.GetEnvironmentVariable("CLIENT_TOKEN");
 
 if (token is null)
 {

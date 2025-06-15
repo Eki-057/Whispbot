@@ -9,7 +9,8 @@ namespace Whispbot
 {
     public static class Config
     {
-        public static bool isDev => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        public static readonly string Version = "1.0.0";
+        public static bool IsDev => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     }
 
     public class Auth
