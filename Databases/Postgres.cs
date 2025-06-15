@@ -16,6 +16,45 @@ namespace Whispbot.Databases
         private static DateTime _lastConnectionAttempt = DateTime.MinValue;
         private static readonly TimeSpan _reconnectInterval = TimeSpan.FromMinutes(2); // Retry after 2 minutes
 
+        private static readonly TimeSpan _pingMeasureInterval = TimeSpan.FromMinutes(5);
+        private static double _ping = -1d;
+
+        /// <summary>
+        /// The database ping in ms
+        /// </summary>
+        public static double Ping
+        {
+            get
+            {
+                if (_ping < 0 || DateTime.UtcNow - _lastConnectionAttempt > _pingMeasureInterval)
+                {
+                    _ping = MeasurePing();
+                }
+                return _ping;
+            }
+        }
+
+        public static double MeasurePing()
+        {
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            {
+                return -1d;
+            }
+            double start = DateTimeOffset.UtcNow.UtcTicks;
+            try
+            {
+                using (NpgsqlCommand command = new("SELECT 1", _connection))
+                {
+                    command.ExecuteScalar();
+                }
+                return (DateTimeOffset.UtcNow.UtcTicks - start) / 10000;
+            }
+            catch
+            {
+                return -1d;
+            }
+        }
+
         /// <summary>
         /// Gets the database connection. If the connection is not established or has been closed,
         /// it will attempt to reconnect if the last failed attempt was more than the reconnect interval ago.
@@ -76,7 +115,7 @@ namespace Whispbot.Databases
                 if (string.IsNullOrEmpty(password)) missingVars.Add("DB_PASSWORD");
                 if (string.IsNullOrEmpty(database)) missingVars.Add("DB_DATABASE");
 
-                if (Config.isDev)
+                if (Config.IsDev)
                 {
                     string? public_url = Environment.GetEnvironmentVariable("DB_PUBLIC_URL");
                     if (!string.IsNullOrEmpty(public_url) && public_url.Contains('@') && public_url.Contains(':'))

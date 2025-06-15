@@ -19,6 +19,7 @@ namespace Whispbot.Commands
             #region Commands
 
             RegisterCommand(new Ping());
+            RegisterCommand(new About());
 
             #endregion
 
@@ -32,7 +33,7 @@ namespace Whispbot.Commands
 
         public void HandleMessage(Client client, Message message)
         {
-            string prefix = Config.isDev ? "b;" : "b!";
+            string prefix = Config.IsDev ? "a!" : "b!";
             string mention = $"<@{client.readyData?.user.id}>";
 
             if (message.content.StartsWith(mention)) prefix = mention;

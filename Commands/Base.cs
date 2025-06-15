@@ -13,6 +13,7 @@ namespace Whispbot.Commands
         public abstract string Name { get; }
         public abstract string Description { get; }
         public abstract List<string> Aliases { get; }
+        public abstract List<string> Usage { get; }
         public abstract Task ExecuteAsync(CommandContext ctx);
     }
 
