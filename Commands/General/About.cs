@@ -39,13 +39,21 @@ namespace Whispbot.Commands.General
                                 {
                                     components = [
                                          new TextDisplayBuilder(
-                                            $"## System" +
+                                            $"## System"
+                                        )
+                                    ],
+                                    accessory = new ButtonBuilder { label = "Our Host", url = "https://railway.com?referralCode=whisp" }
+                                },
+                                new SectionBuilder
+                                {
+                                    components = [
+                                         new TextDisplayBuilder(
                                             $"\n**OS:** {System.Runtime.InteropServices.RuntimeInformation.OSDescription}" +
                                             $"\n**CPU:** {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} ({Environment.ProcessorCount} cores)" +
                                             $"\n**Uptime:** {uptime.Days}d {uptime.Hours}h {uptime.Minutes}m"
                                         )
                                     ],
-                                    accessory = new ButtonBuilder { label = "Our Host", url = "https://railway.com?referralCode=whisp" }
+                                    accessory = new ButtonBuilder { label = "Our Setup", url = "https://railway.com/project/480a8b6c-8ba4-416e-8113-fe1347d1b921?environmentId=4846519f-3fdb-431d-a477-c21ec8fec8ba&referralCode=whisp" }
                                 },
                                 new SeperatorBuilder(false),
                                 new TextDisplayBuilder(

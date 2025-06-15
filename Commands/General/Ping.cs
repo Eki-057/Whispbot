@@ -26,7 +26,7 @@ namespace Whispbot.Commands.General
                             new EmbedField { name = "Ping", value = $"{Math.Floor(ctx.client.ping)}ms", inline = true },
                             new EmbedField { name = "Database", value = $"{(Postgres.IsConnected() ? $"Connected ({Math.Floor(Postgres.Ping)}ms)" : "Disconnected")}", inline = true }
                         )
-                        .SetFooter($"Shard {ctx.client.shard?.id}, {Tools.ConvertMillisecondsToRelativeString(ctx.client.startupTime.ToUnixTimeMilliseconds(), true, ", ", false, 60000)}")
+                        .SetFooter($"Shard {ctx.client.shard?.id} • {Tools.ConvertMillisecondsToRelativeString(ctx.client.startupTime.ToUnixTimeMilliseconds(), true, ", ", false, 60000)}")
                     ]
                 }
             );
