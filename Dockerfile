@@ -1,12 +1,7 @@
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-
-# Install ASP.NET Core runtime in the base image
-RUN apt-get update && apt-get install -y \
-    aspnetcore-runtime-8.0 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
