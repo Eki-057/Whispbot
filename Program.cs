@@ -10,6 +10,7 @@ using Whispbot.Databases;
 using Npgsql;
 using Whispbot.Extensions;
 using Serilog;
+using Whispbot.API;
 
 Logger.Initialize();
 
@@ -25,26 +26,16 @@ if (token is null)
     return;
 }
 
-Thread redisInitializationThread = new(new ThreadStart(() =>
-{
-    if (!Redis.Init()) return;
-}))
-{ Name = "Redis Initialization" };
-redisInitializationThread.Start();
+_ = Task.Run(Redis.Init);
+_ = Task.Run(Postgres.Init);
+_ = Task.Run(SentryConnection.Init);
 
-Thread postgresInitializationThread = new(new ThreadStart(() =>
+Thread APIThread = new(new ThreadStart(WhispbotAPI.Start))
 {
-    if (!Postgres.Init()) return;
-}))
-{ Name = "Postgres Initialization" };
-postgresInitializationThread.Start();
-
-Thread otherInitializationThread = new(new ThreadStart(() =>
-{
-    SentryConnection.Init();
-}))
-{ Name = "Other Initialization" };
-otherInitializationThread.Start();
+    Name = "Whispbot API",
+    IsBackground = true
+};
+APIThread.Start();
 
 ShardingManager sharding = new(
     token,
