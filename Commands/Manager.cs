@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Whispbot.Commands.General;
+using Whispbot.Commands.Shifts;
 using Whispbot.Commands.Staff;
 using YellowMacaroni.Discord.Cache;
 using YellowMacaroni.Discord.Core;
@@ -26,7 +30,12 @@ namespace Whispbot.Commands
             RegisterCommand(new About());
             RegisterCommand(new Support());
 
+            RegisterCommand(new Clockin());
+            RegisterCommand(new Clockout());
+
             RegisterStaffCommand(new Test());
+            RegisterStaffCommand(new SQL());
+            RegisterStaffCommand(new UpdateLanguages());
 
             #endregion
 
@@ -44,23 +53,58 @@ namespace Whispbot.Commands
             _staffCommands.Add(command);
         }
 
+        private int? _maxLength = null;
+        public int MaxLength
+        {
+            get
+            {
+                _maxLength ??= _commands.Max(c => c.Aliases.Max(a => a.Split(" ").Length));
+                return _maxLength ?? 0;
+            }
+        }
+
         public void HandleMessage(Client client, Message message)
         {
             string prefix = Config.IsDev ? "a!" : "b!";
             string mention = $"<@{client.readyData?.user.id}>";
 
-            string staffPrefix = Config.IsDev ? ">>>" : ">>";
+            string staffPrefix = Config.staffPrefix;
 
             if (message.content.StartsWith(mention)) prefix = mention;
 
             if (message.content.StartsWith(prefix, StringComparison.CurrentCultureIgnoreCase))
             {
                 List<string> args = [.. message.content[prefix.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries)];
-                string commandName = args[0].ToLowerInvariant(); args.RemoveAt(0);
+                string content = args.Join(" ");
 
-                Command? command = _commands.Find(c => c.Aliases.Contains(commandName));
+                Command? command = null;
+                for (int len = MaxLength; len > 0; len--)
+                {
+                    Command? activeCommand = _commands.Find(c =>
+                    {
+                        foreach (string alias in c.Aliases)
+                        {
+                            int length = alias.Split(" ").Length;
+                            if (length == len && (content.StartsWith($"{alias} ", StringComparison.CurrentCultureIgnoreCase) || content.Equals(alias, StringComparison.CurrentCultureIgnoreCase)))
+                            {
+                                args.RemoveRange(0, length);
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                    if (activeCommand is not null)
+                    {
+                        command = activeCommand;
+                        break;
+                    }
+                }
 
-                command?.ExecuteAsync(new CommandContext(client, message, args));
+                MatchCollection matches = Regex.Matches(args.Join(" "), @"--(\w+)");
+                List<string> flags = [.. matches.Select(m => m.Groups[1].Value)];
+                args = [..args.Where(a => !flags.Contains(a))];
+
+                command?.ExecuteAsync(new CommandContext(client, message, args, flags));
             }
             else if 
             (
@@ -70,11 +114,36 @@ namespace Whispbot.Commands
             )
             {
                 List<string> args = [.. message.content[staffPrefix.Length..].Split(' ', StringSplitOptions.RemoveEmptyEntries)];
-                string commandName = args[0].ToLowerInvariant(); args.RemoveAt(0);
+                string content = args.Join(" ");
 
-                Command? command = _staffCommands.Find(c => c.Aliases.Contains(commandName));
+                Command? command = null;
+                for (int len = MaxLength; len > 0; len--)
+                {
+                    Command? activeCommand = _staffCommands.Find(c =>
+                    {
+                        foreach (string alias in c.Aliases)
+                        {
+                            int length = alias.Split(" ").Length;
+                            if (length == len && (content.StartsWith($"{alias} ", StringComparison.CurrentCultureIgnoreCase) || content.Equals(alias, StringComparison.CurrentCultureIgnoreCase)))
+                            {
+                                args.RemoveRange(0, length);
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                    if (activeCommand is not null)
+                    {
+                        command = activeCommand;
+                        break;
+                    }
+                }
 
-                command?.ExecuteAsync(new CommandContext(client, message, args));
+                MatchCollection matches = Regex.Matches(args.Join(" "), @"--(\w+)");
+                List<string> flags = [.. matches.Select(m => m.Groups[1].Value)];
+                args = [.. args.Where(a => !flags.Contains(a))];
+
+                command?.ExecuteAsync(new CommandContext(client, message, args, flags));
             }
         }
 

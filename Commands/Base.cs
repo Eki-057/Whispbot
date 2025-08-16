@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using YellowMacaroni.Discord.Cache;
 using YellowMacaroni.Discord.Core;
+using YellowMacaroni.Discord.Extentions;
 
 namespace Whispbot.Commands
 {
@@ -17,11 +19,16 @@ namespace Whispbot.Commands
         public abstract Task ExecuteAsync(CommandContext ctx);
     }
 
-    public class CommandContext (Client client, Message message, List<string> args)
+    public class CommandContext (Client client, Message message, List<string> args, List<string> flags)
     {
         public Client client = client;
         public Message message = message;
         public List<string> args = args;
+        public List<string> flags = flags;
+
+        public string? guildId = message.channel?.guild_id;
+        public Guild? Guild => guildId is not null ? DiscordCache.Guilds.Get(guildId).WaitFor() : null;
+        public User? user = message.author;
 
         public Message? repliedMessage = null;
 
@@ -29,7 +36,7 @@ namespace Whispbot.Commands
         {
             if (message.channel is null) return (null, new(new()));
 
-            (Message? sentMessage, DiscordError? error) = await message.channel.Send(content);
+            (Message? sentMessage, DiscordError? error) = await message.channel.Send(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(content).Process()) ?? new MessageBuilder() { content = "Something went wrong..." });
 
             if (sentMessage is not null) repliedMessage = sentMessage;
 
@@ -52,7 +59,7 @@ namespace Whispbot.Commands
 
         public async Task<(Message?, DiscordError?)> EditResponse(string content)
         {
-            return await EditResponse(new MessageBuilder { content = content });
+            return await EditResponse(new MessageBuilder { content = content.Process() });
         }
     }
 }
