@@ -13,6 +13,7 @@ namespace Whispbot.Databases
         private static ConnectionMultiplexer? _redis = null;
         private static ISubscriber? _pubSub = null;
         private static IDatabase? _db = null;
+        private static bool _connecting = false;
         private static bool _connected = false;
         private static DateTime _lastConnectionAttempt = DateTime.MinValue;
         private static readonly TimeSpan _reconnectInterval = TimeSpan.FromMinutes(2); // Retry after 2 minutes
@@ -76,6 +77,8 @@ namespace Whispbot.Databases
 
         public static bool Init()
         {
+            if (_connecting) return false;
+            _connecting = true;
             double start = DateTimeOffset.UtcNow.UtcTicks;
             Log.Information("Connecting to Redis...");
             _lastConnectionAttempt = DateTime.UtcNow;
@@ -152,18 +155,21 @@ namespace Whispbot.Databases
 
                 Log.Information($"Connected to Redis in {(DateTimeOffset.UtcNow.UtcTicks - start) / 10000}ms");
                 _connected = true;
+                _connecting = false;
                 return true;
             }
             catch (RedisConnectionException ex)
             {
                Log.Error($"Redis connection error: {ex.Message}");
                 _connected = false;
+                _connecting = false;
                 return false;
             }
             catch (Exception ex)
             {
                 Log.Error($"Unexpected error during Redis connection: {ex.Message}");
                 _connected = false;
+                _connecting = false;
                 return false;
             }
         }

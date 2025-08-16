@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Dynamic;
 using System.Reflection;
 
 namespace Whispbot.Extensions
@@ -48,6 +49,28 @@ namespace Whispbot.Extensions
             MapReaderToObject(reader, item, columnNames, mappings);
 
             return item;
+        }
+
+        public static List<object> ToDynamicList(this NpgsqlDataReader reader)
+        {
+            var result = new List<object>();
+            var columnNames = new string[reader.FieldCount];
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                columnNames[i] = reader.GetName(i);
+            }
+
+            while (reader.Read())
+            {
+                IDictionary<string, object?> expando = new ExpandoObject();
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    expando[columnNames[i]] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                }
+                result.Add(expando);
+            }
+
+            return result;
         }
 
         /// <summary>

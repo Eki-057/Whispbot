@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Whispbot.Extensions;
+using YellowMacaroni.Discord.Extentions;
 
 namespace Whispbot.Databases
 {
@@ -18,6 +19,7 @@ namespace Whispbot.Databases
 
         private static readonly TimeSpan _pingMeasureInterval = TimeSpan.FromMinutes(5);
         private static double _ping = -1d;
+        private static bool _connecting = false;
 
         /// <summary>
         /// The database ping in ms
@@ -86,6 +88,8 @@ namespace Whispbot.Databases
 
         public static bool Init()
         {
+            if (_connecting) return false;
+            _connecting = true;
             double start = DateTimeOffset.UtcNow.UtcTicks;
             Log.Information("Connecting to postgres...");
             _lastConnectionAttempt = DateTime.UtcNow;
@@ -168,18 +172,21 @@ namespace Whispbot.Databases
 
                 Log.Information($"Connected to postgres in {(DateTimeOffset.UtcNow.UtcTicks - start) / 10000}ms");
                 _connected = true;
+                _connecting = false;
                 return true;
             }
             catch (NpgsqlException ex)
             {
                 Log.Error($"Database connection error: {ex.Message}");
                 _connected = false;
+                _connecting = false;
                 return false;
             }
             catch (Exception ex)
             {
                 Log.Error($"Unexpected error during database connection: {ex.Message}");
                 _connected = false;
+                _connecting = false;
                 return false;
             }
         }
@@ -216,32 +223,61 @@ namespace Whispbot.Databases
             }
         }
 
-        public static List<T>? Select<T>(string sql) where T : new()
+        private static NpgsqlCommand AddArgs(this NpgsqlCommand command, List<object> args)
+        {
+            int i = 1;
+            foreach (var arg in args)
+            {
+                command.Parameters.AddWithValue($"@{i}", arg);
+                i++;
+            }
+            return command;
+        }
+
+        public static List<T>? Select<T>(string sql, List<object>? args = null) where T : new()
         {
             var connection = GetConnection();
             if (connection is null) return null;
 
             using var command = new NpgsqlCommand(sql, connection);
+            command.AddArgs(args ?? []);
+
             using var reader = command.ExecuteReader();
             return reader.ToList<T>();
         }
 
-        public static T? SelectFirst<T>(string sql) where T : new()
+        public static List<dynamic>? Select(string sql, List<object>? args = null)
+        {
+            var connection = GetConnection();
+            if (connection is null) return null;
+
+            using var command = new NpgsqlCommand(sql, connection);
+            command.AddArgs(args ?? []);
+
+            using var reader = command.ExecuteReader();
+            return reader.ToDynamicList();
+        }
+
+        public static T? SelectFirst<T>(string sql, List<object>? args = null) where T : new()
         {
             var connection = GetConnection();
             if (connection is null) return default;
 
             using var command = new NpgsqlCommand(sql, connection);
+            command.AddArgs(args ?? []);
+
             using var reader = command.ExecuteReader();
             return reader.FirstOrDefault<T>();
         }
 
-        public static int Execute(string sql)
+        public static int Execute(string sql, List<object>? args = null)
         {
             var connection = GetConnection();
             if (connection is null) return -1;
 
             using var command = new NpgsqlCommand(sql, connection);
+            command.AddArgs(args ?? []);
+
             return command.ExecuteNonQuery();
         }
     }
