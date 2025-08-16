@@ -13,6 +13,7 @@ using System.Diagnostics.CodeAnalysis;
 using YellowMacaroni.Discord.Core;
 using YellowMacaroni.Discord.Cache;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace Whispbot.API
 {
@@ -53,6 +54,7 @@ namespace Whispbot.API
                 }
             }
 
+            Log.Information($"API started on http://localhost:{port}.");
             app.Run();
         }
 
