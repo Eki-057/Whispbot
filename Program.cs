@@ -103,7 +103,7 @@ var config = new DiscordSocketConfig
 
     LogLevel = Config.isDev ? LogSeverity.Debug : LogSeverity.Info,
 
-    GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent | GatewayIntents.GuildMembers,
+    GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
 
     TotalShards = shards,
     ConnectionTimeout = connectionTimeoutMs
