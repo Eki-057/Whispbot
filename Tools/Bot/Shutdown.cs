@@ -45,13 +45,20 @@ namespace Whispbot.Tools.Bot
             });
         }
 
-        private static bool _started = false;
-        public static bool IsShuttingDown => _started;
+        private static int _started;
+        public static bool IsShuttingDown => Volatile.Read(ref _started) != 0;
         public static event Action? OnShuttingDown;
+        internal static void RestartForGatewayFailure(int shardId, Discord.ConnectionState state)
+        {
+            if (Interlocked.CompareExchange(ref _started, 1, 0) != 0) return;
+
+            Error($"Gateway watchdog: shard {shardId} stuck in {state}; exiting for automatic restart.");
+            Environment.Exit(1);
+        }
+
         public static async Task Start()
         {
-            if (_started) return;
-            _started = true;
+            if (Interlocked.CompareExchange(ref _started, 1, 0) != 0) return;
             OnShuttingDown?.Invoke();
             Warning("Starting shutdown...");
 

@@ -124,6 +124,7 @@ DiscordPublisher.Start(client);
 DiscordModeration.RegisterClient(client);
 
 await client.LoginAsync(TokenType.Bot, token);
+GatewayWatchdog.Start(client, connectionTimeoutMs);
 await client.StartAsync();
 
 ShardLogger.Init(client);
