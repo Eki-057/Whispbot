@@ -12,7 +12,7 @@ internal static class GatewayWatchdog
         var recoveryTimeout = TimeSpan.FromMinutes(2);
         var startupTimeout = TimeSpan.FromMilliseconds(Math.Max(
             recoveryTimeout.TotalMilliseconds,
-            connectionTimeoutMs + Math.Max(0, client.Shards.Count - 1) * 5_000L + 60_000L));
+            connectionTimeoutMs + (Math.Max(0, client.Shards.Count - 1) * 5_000L) + 60_000L));
         var policy = new GatewayRecoveryPolicy(recoveryTimeout, startupTimeout);
 
         new Thread(() =>
